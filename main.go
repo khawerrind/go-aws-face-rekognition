@@ -1,11 +1,21 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/khawerrind/go-aws-face-rekognition/controllers"
 	"github.com/khawerrind/go-aws-face-rekognition/services/envvar"
-	"net/http"
 )
+
+func init() {
+	// loads values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+}
 
 func main() {
 	//make sure env variables are setup correctly
@@ -19,7 +29,7 @@ func main() {
 	v1 := router.Group("/v1")
 	{
 		mainController := new(controllers.MainController)
-		v1.POST("/findFaces", mainController.FindFaces)
+		v1.POST("/compareFaces", mainController.CompareFaces)
 	}
 
 	router.NoRoute(func(c *gin.Context) {

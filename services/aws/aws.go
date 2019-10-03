@@ -3,6 +3,7 @@ package aws
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -12,17 +13,19 @@ import (
 	"github.com/khawerrind/go-aws-face-rekognition/services/envvar"
 )
 
+//MatchedObjects AWS keys mapping
 type MatchedObjects struct {
 	Key      string
 	Error    bool
 	ErrorMsg string
 }
 
-func DetectFaces(folderPath string, r []byte) (error, []*MatchedObjects) {
+//CompareFaces Hanldes /compareFaces
+func CompareFaces(folderPath string, r []byte) ([]*MatchedObjects, error) {
 	responses := []*MatchedObjects{}
 	awsSess, err := session.NewSession()
 	if err != nil {
-		return err, responses
+		return responses, err
 	}
 
 	svc := s3.New(awsSess)
@@ -41,13 +44,13 @@ func DetectFaces(folderPath string, r []byte) (error, []*MatchedObjects) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchBucket:
-				return errors.New("The bucket that you have specified does not exists"), responses
+				return responses, errors.New("The bucket that you have specified does not exists")
 			default:
-				return aerr, responses
+				return responses, aerr
 			}
 		}
 
-		return err, responses
+		return responses, err
 	}
 
 	c := make(chan *MatchedObjects, len(objects.Contents))
@@ -55,6 +58,12 @@ func DetectFaces(folderPath string, r []byte) (error, []*MatchedObjects) {
 	svcR := rekognition.New(awsSess)
 
 	for _, object := range objects.Contents {
+		fileExt := filepath.Ext(*object.Key)
+		if fileExt != ".jpg" && fileExt != ".jpeg" && fileExt != ".png" {
+			c <- &MatchedObjects{Key: *object.Key, Error: true, ErrorMsg: "Not an image file"}
+			continue
+		}
+
 		go func(key string) {
 			input := &rekognition.CompareFacesInput{
 				SimilarityThreshold: aws.Float64(90.000000),
@@ -99,10 +108,10 @@ func DetectFaces(folderPath string, r []byte) (error, []*MatchedObjects) {
 		case res := <-c:
 			responses = append(responses, res)
 			if len(responses) == len(objects.Contents) {
-				return nil, responses
+				return responses, nil
 			}
 		}
 	}
 
-	return nil, responses
+	return responses, nil
 }

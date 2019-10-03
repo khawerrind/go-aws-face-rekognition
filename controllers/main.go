@@ -11,7 +11,7 @@ import (
 
 type MainController struct{}
 
-func (main *MainController) FindFaces(c *gin.Context) {
+func (main *MainController) CompareFaces(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
 
 	if err != nil {
@@ -31,7 +31,7 @@ func (main *MainController) FindFaces(c *gin.Context) {
 
 	folderPath := c.PostForm("folder_path")
 
-	err, result := aws.DetectFaces(folderPath, r)
+	result, err := aws.CompareFaces(folderPath, r)
 	if err != nil {
 		c.JSON(406, gin.H{"message": err.Error()})
 		c.Abort()
