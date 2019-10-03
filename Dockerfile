@@ -13,5 +13,5 @@ RUN go get ./...
 # Build the binary.
 RUN CGO_ENABLED=0 go build -o main .
 
-# Run the hello binary.
+# Run the binary.
 CMD ["/go/src/github.com/khawerrind/go-aws-face-rekognition/main"]

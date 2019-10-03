@@ -30,7 +30,7 @@ Steps for getting up and running,
 4. Using [Postman](https://www.getpostman.com/) or any other REST API tool make a POST request to the following endpoint
 
     ```sh
-    POST http://localhost:8080/v1/findFaces
+    POST http://localhost:8080/v1/compareFaces
     Content-Type: multipart/form-data;
     boundary=----WebKitFormBoundaryWfPNVh4wuWBlyEyQ
     
